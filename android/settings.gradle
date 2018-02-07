@@ -1,0 +1,7 @@
+rootProject.name = 'ReactEditor'
+include ':react-native-webview-bridge-updated'
+project(':react-native-webview-bridge-updated').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-webview-bridge-updated/android')
+include ':react-native-webview-bridge'
+project(':react-native-webview-bridge').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-webview-bridge/android')
+
+include ':app'
