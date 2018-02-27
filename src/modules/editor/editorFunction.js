@@ -19,8 +19,7 @@ let optionsVideo = {
     }
 };
 
-const UPLOAD_IMAGE_URL = 'http://api.colorme.vn/upload-image-public';
-const UPLOAD_VIDEO_URL = 'http://api.colorme.vn/upload-video-public';
+const UPLOAD_IMAGE_URL = 'http://api.keetool.xyz/upload-image-public';
 
 uploadImage = (file, completeHandler, progressHandler, error) => {
     let formdata = new FormData();
@@ -35,11 +34,11 @@ uploadImage = (file, completeHandler, progressHandler, error) => {
 
 uploadVideo = (file, completeHandler, progressHandler, error) => {
     let formdata = new FormData();
-    formdata.append('video', file);
+    formdata.append('image', file);
     let ajax = new XMLHttpRequest();
     ajax.addEventListener("load", completeHandler, false);
     ajax.upload.onprogress = progressHandler;
-    ajax.open("POST", UPLOAD_VIDEO_URL);
+    ajax.open("POST", UPLOAD_IMAGE_URL);
     ajax.send(formdata);
     ajax.addEventListener("error", error, false);
 }
@@ -67,6 +66,7 @@ export let choiceImage = (openLibrary, completeHandler, progressHandler, error) 
                 name: response.fileName,
                 type: 'image/*',
             };
+            console.log(source);
             uploadImage(source, completeHandler, progressHandler, error);
         }
     });
@@ -92,8 +92,8 @@ export let choiceVideo = (openLibrary, completeHandler, progressHandler, error) 
             openLibrary();
             let source = {
                 uri: response.uri,
-                name: response.fileName,
-                type: 'video/mp4',
+                name: response.fileName ? response.fileName : "video.mp4",
+                type: 'video/*',
             };
             uploadVideo(source, completeHandler, progressHandler, error);
         }

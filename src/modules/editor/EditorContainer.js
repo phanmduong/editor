@@ -8,7 +8,10 @@ import {
     StyleSheet,
     Dimensions,
     KeyboardAvoidingView,
-    ToastAndroid
+    ToastAndroid,
+    Keyboard,
+    TextInput,
+    AsyncStorage
 } from 'react-native';
 // NATIVE-BASE LIBRARY
 import {Container, Content, Item, Input, Left, Right} from 'native-base';
@@ -20,50 +23,109 @@ import DatePicker from 'react-native-datepicker'
 import moment from 'moment';
 // FUNCTION OF EDITOR
 import * as editorFunction from './editorFunction';
-import Editor from "./Editor";
+// MODAL PROCESS UPLOAD SERVER
 import ModalProcess from "./ModalProcess";
-
+import WebViewBridge from 'react-native-webview-bridge-updated';
+import {injectScript} from "./constants";
 
 class EditorContainer extends Component {
     constructor() {
         super();
+        let now = moment().format("MMMM / DD / YYYY");
         this.state = {
-            imageSource: '',
-            videoSource: '',
-            date: '',
+            date: now,
             status: {
                 public: false,
                 color: color.disableColor,
                 label: "NON - PUBLIC"
             },
+            title: '',
             progressUpload: 0,
-            isUploading: false
+            isUploading: false,
+        };
+    }
+
+
+    keyboardWillShow(e) {
+        console.log(e.endCoordinates.height);
+    }
+
+
+    /**
+     * Get data post
+     **/
+    async getData() {
+        try {
+            var post = await AsyncStorage.getItem('@Editor:editor');
+
+            post = JSON.parse(post);
+            const data = {
+                message: "content",
+                content: post.content ? post.content.replace(/"/g, "@") : ''
+            };
+
+            const status = post.public && post.public ? {
+                    public: true,
+                    color: color.mainColor,
+                    label: "PUBLIC"
+                }
+                :
+                {
+                    public: false,
+                    color: color.mainColor,
+                    label: "NON - PUBLIC"
+                }
+
+            this.setState({
+                date: post.date,
+                status: status,
+                title: post.title,
+            });
+
+            const {webviewbridge} = this.refs;
+            setTimeout(function () {
+                webviewbridge.sendToBridge(JSON.stringify(data));
+            }, 100);
+        }
+
+        catch (error) {
+        }
+    };
+
+    componentWillMount() {
+        this.keyboardWillShowListener = Keyboard.addListener(
+            'keyboardWillShow', this.keyboardWillShow.bind(this));
+
+        //if params has id then edit post else new post
+        const {params} = this.props.navigation.state;
+        const postId = params ? params.id : null;
+        if (postId) {
+            this.getData();
         }
     }
 
-    componentWillMount() {
-        // GET TIME NOW
-        let now = moment().format("MMMM / DD / YYYY");
-        this.setState({date: now})
-    }
-
-    // FUNCTION CHOICE IMAGE
+// FUNCTION CHOICE IMAGE
     choiceImage() {
         this.typeLibrary = 'image';
         editorFunction.choiceImage(this.openLibrary, this.completeHandler, this.progressHandler, this.error)
     }
 
+// OPEN LIBRARY SELECT
     openLibrary = () => {
-        console.log("open");
         this.setState({
             isUploading: true,
             processUpload: 0
         });
     };
 
+    /**
+     * Handle when upload server complete
+     **/
     completeHandler = (event) => {
         this.setState({isUploading: false});
+        console.log(event.currentTarget.response);
         var data = JSON.parse(event.currentTarget.response);
+        const {webviewbridge} = this.refs;
         data = {
             link: data.link,
         };
@@ -72,20 +134,27 @@ class EditorContainer extends Component {
 
         if (this.typeLibrary === 'image') {
             data.message = 'image';
-            this.editor.sendToBridge(JSON.stringify(data));
+            webviewbridge.sendToBridge(JSON.stringify(data));
         } else {
             ToastAndroid.show(data.link, ToastAndroid.SHORT);
             data.message = 'video';
-            this.editor.sendToBridge(JSON.stringify(data));
+            webviewbridge.sendToBridge(JSON.stringify(data));
         }
     };
 
+    /**
+     * Progress upload server
+     **/
     progressHandler = (event) => {
         const percentComplete = event.loaded / event.total;
         console.log(percentComplete);
         this.setState({progressUpload: percentComplete})
     };
 
+
+    /**
+     * Error when upload server error
+     **/
     error = (error) => {
         this.setState({isUploading: false});
         Alert.alert(
@@ -94,155 +163,244 @@ class EditorContainer extends Component {
         )
     };
 
-    // FUNCTION CHOICE VIDEO
+    /**
+     * FUNCTION CHOICE VIDEO
+     */
+
     choiceVideo() {
         this.typeLibrary = 'video';
         editorFunction.choiceVideo(this.openLibrary, this.completeHandler, this.progressHandler, this.error)
     }
 
-    // FUNCTION CHANGE STATUS PUBLIC <-> NON-PUBLIC
+    /**
+     * FUNCTION CHANGE STATUS PUBLIC <-> NON-PUBLIC
+     */
     changeStatus() {
+        this.closeKeyboard();
         const {status} = this.state;
         status.public
             ?
-            this.setState({status: {public: false, color: color.disableColor, label: "NON - PUBLIC"}})
+            this.setState({status: {public: false, color: color.mainColor, label: "NON - PUBLIC"}})
             :
             this.setState({status: {public: true, color: color.mainColor, label: "PUBLIC"}})
     }
 
-    refEditor = (editor) => {
-        this.editor = editor;
+    /**
+     * Close keyboard
+     */
+    closeKeyboard = () => {
+        const data = {message: 'blur'};
+        const {webviewbridge} = this.refs;
+        webviewbridge.sendToBridge(JSON.stringify(data));
+        Keyboard.dismiss();
     };
 
+    /**
+     * Event call save content post
+     **/
+    saveEditor = () => {
+        const data = {message: 'save'};
+        const {webviewbridge} = this.refs;
+        webviewbridge.sendToBridge(JSON.stringify(data));
+    };
+
+    /**
+     * Save content post local
+     **/
+    async saveLocal(content) {
+        let data = {
+            title: this.state.title,
+            public: this.state.status.public,
+            date: this.state.date,
+            content: content
+        };
+        try {
+            await
+                AsyncStorage.setItem('@Editor:editor', JSON.stringify(data));
+            Alert.alert(
+                'Notification',
+                'Save successfull'
+            )
+        } catch (error) {
+        }
+    }
+    ;
+
+    /**
+     * Receive event editor
+     **/
+    onBridgeMessage(data) {
+        data = JSON.parse(data);
+
+        switch (data.message) {
+            case "save":
+                console.log(data.content);
+                this.saveLocal(data.content);
+                break;
+        }
+    }
+
     render() {
-        const {navigate} = this.props.navigation;
-        const {status, imageSource} = this.state;
+        const {status} = this.state;
         const {goBack} = this.props.navigation;
+        const pageSource = require('./editor.html');
 
         return (
+
             <Container style={styles.wrapperContainer}>
-                {/*HEADER*/}
-                <View
-                    style={[styles.wrapperHeader, styles.paddingLeftRight, styles.wrapperRowSpaceBetween, styles.shadow]}>
-                    {/*BACK BUTTON*/}
-                    <TouchableOpacity
-                        style={styles.wrapperRowCenter}
-                        onPress={() => goBack(null)}
-                    >
-                        <IconDefault
-                            name={"Entypo|chevron-left"}
-                            style={{paddingLeft: 0}}
-                        />
-                        <Text style={[styles.textButton]}>BACK</Text>
-                    </TouchableOpacity>
-                    {/*END BACK BUTTON*/}
-
-                    {/*SAVE BUTTON*/}
-                    <TouchableOpacity>
-                        <Text style={[styles.textButton, {color: color.mainColor}]}>SAVE</Text>
-                    </TouchableOpacity>
-                    {/*END SAVE BUTTON*/}
-                </View>
-                {/*END HEADER*/}
-
-                {/*BODY*/}
-                <View style={styles.wrapperBody}>
-                    <View style={[styles.wrapperRowSpaceBetween]}>
-
-                        {/*DATA PICKER*/}
-                        <Left style={styles.wrapperRowCenter}>
-                            <DatePicker
-                                numberOfLines={1}
-                                date={this.state.date}
-                                mode="date"
-                                placeholder="Select Date"
-                                format="MMMM / DD / YYYY"
-                                confirmBtnText="Confirm"
-                                cancelBtnText="Cancel"
-                                showIcon={false}
-                                customStyles={{
-                                    dateInput: {
-                                        paddingLeft: 5,
-                                        borderWidth: 0, alignItems: 'flex-start',
-                                    },
-                                    dateText: {
-                                        color: color.mainColor,
-                                        fontSize: 14,
-                                        paddingRight: 5,
-                                    }
-                                }}
-                                onDateChange={(date) => {
-                                    this.setState({date: date})
-                                }}
-                            />
+                <TouchableOpacity
+                    activeOpacity={1}
+                    onPress={() => this.closeKeyboard()}
+                >
+                    {/*HEADER*/}
+                    <View
+                        onPress={this.closeKeyboard}
+                        style={[styles.wrapperHeader, styles.paddingLeftRight, styles.wrapperRowSpaceBetween, styles.shadow]}>
+                        {/*BACK BUTTON*/}
+                        <TouchableOpacity
+                            style={styles.wrapperRowCenter}
+                            onPress={() => goBack(null)}
+                        >
                             <IconDefault
-                                name={"FontAwesome|calendar"}
-                                color={color.mainColor}
+                                name={"Entypo|chevron-left"}
                                 style={{paddingLeft: 0}}
                             />
-                        </Left>
-                        {/*END DATA PICKER*/}
+                            <Text style={[styles.textButton]}>BACK</Text>
+                        </TouchableOpacity>
+                        {/*END BACK BUTTON*/}
 
-                        {/*SET PUBLIC BUTTON*/}
-                        <Right>
+                        {/*SAVE BUTTON*/}
+                        <TouchableOpacity
+                            onPress={() => this.saveEditor()}
+                        >
+                            <Text style={[styles.textButton, {color: color.mainColor}]}>SAVE</Text>
+                        </TouchableOpacity>
+                        {/*END SAVE BUTTON*/}
+                    </View>
+                    {/*END HEADER*/}
+
+                    {/*BODY*/}
+                    <View style={styles.wrapperBody}>
+                        <View style={[styles.wrapperRowSpaceBetween]}>
+
+                            {/*DATA PICKER*/}
+                            <Left style={styles.wrapperRowCenter}>
+                                <DatePicker
+                                    style={{width: deviceWidth / 2}}
+                                    numberOfLines={1}
+                                    date={this.state.date}
+                                    mode="date"
+                                    placeholder="Select Date"
+                                    format="MMMM / DD / YYYY"
+                                    confirmBtnText="Confirm"
+                                    cancelBtnText="Cancel"
+                                    customStyles={{
+                                        dateInput: {
+                                            borderWidth: 0,
+                                            alignItems: 'flex-start',
+                                            width: 200
+                                        },
+                                        dateText: {
+                                            color: color.mainColor,
+                                            fontSize: 12,
+                                        }
+                                    }}
+                                    onDateChange={(date) => {
+                                        this.setState({date: date})
+                                    }}
+                                    onOpenModal={() => {
+                                        this.closeKeyboard();
+                                    }}
+                                    iconComponent={
+                                        <IconDefault
+                                            name={"FontAwesome|calendar"}
+                                            color={color.mainColor}
+                                            size={10}
+                                            style={{paddingLeft: 0}}
+                                        />}
+                                />
+
+                            </Left>
+                            {/*END DATA PICKER*/}
+
+                            {/*SET PUBLIC BUTTON*/}
+                            <Right>
+                                <TouchableOpacity
+                                    style={[styles.wrapperRowCenter, styles.buttonPublic, {borderColor: status.color}]}
+                                    onPress={() => this.changeStatus()}
+                                >
+                                    <IconDefault
+                                        size={13}
+                                        name={"FontAwesome|globe"}
+                                        color={status.color}
+                                        style={{padding: 3}}
+                                    />
+                                    <Text
+                                        style={[styles.textButtonDisable, {
+                                            color: status.color,
+                                            fontSize: 12
+                                        }]}>{status.label}</Text>
+                                </TouchableOpacity>
+                            </Right>
+                            {/*END SET PUBLIC BUTTON*/}
+
+                        </View>
+                        {/*END TOP NAV*/}
+                    </View>
+                </TouchableOpacity>
+                {/*CONTENT*/}
+
+                <KeyboardAvoidingView behavior={isIOS ? 'padding' : null} style={{flex: 1}}>
+                    <View style={style.containerEditor}>
+                        <TextInput
+                            style={styles.textTitle}
+                            onChangeText={(text) => this.setState({title: text})}
+                            value={this.state.title}
+                        />
+
+                        <WebViewBridge
+                            style={{marginBottom: -2}}
+                            scrollEnabled={false}
+                            ref="webviewbridge"
+                            onBridgeMessage={this.onBridgeMessage.bind(this)}
+                            injectedJavaScript={injectScript}
+                            source={pageSource}/>
+                        {/*FOOTER*/}
+                        <View style={[styles.wrapperRowCenter, styles.wrapperBottom]}>
+                            {/*CHOICE IMAGE BUTTON*/}
                             <TouchableOpacity
-                                style={[styles.wrapperRowCenter, styles.buttonPublic, {borderColor: status.color}]}
-                                onPress={() => this.changeStatus()}
+                                activeOpacity={0.6}
+                                style={{paddingRight: 10}}
+                                onPress={() => this.choiceImage()}
                             >
                                 <IconDefault
-                                    name={"FontAwesome|globe"}
-                                    color={status.color}
+                                    name={"Entypo|folder-images"}
+                                    size={20}
+                                    color={color.disableColor}
                                 />
-                                <Text
-                                    style={[styles.textButtonDisable, {color: status.color}]}>{status.label}</Text>
                             </TouchableOpacity>
-                        </Right>
-                        {/*END SET PUBLIC BUTTON*/}
+                            {/*END CHOICE IMAGE BUTTON*/}
 
+                            {/*CHOICE VIDEO BUTTON*/}
+                            <TouchableOpacity
+                                activeOpacity={0.6}
+                                onPress={() => this.choiceVideo()}
+                            >
+                                <IconDefault
+                                    name={"Entypo|folder-video"}
+                                    size={20}
+                                    color={color.disableColor}
+                                />
+                            </TouchableOpacity>
+                            {/*END CHOICE VIDEO BUTTON*/}
+                        </View>
                     </View>
-                    {/*END TOP NAV*/}
-                </View>
-                {/*CONTENT*/}
-                <View style={style.containerEditor}>
-                    <Editor
-                        refEditor={this.refEditor}
-                    />
-                </View>
-                {/*END CONTENT*/}
-                {/*END BODY*/}
+                    {/*END CONTENT*/}
+                    {/*END BODY*/}
 
 
-                {/*FOOTER*/}
-                <KeyboardAvoidingView behavior={isIOS ? 'position' : null}>
-                    <View style={[styles.wrapperRowCenter, styles.wrapperBottom]}>
-                        {/*CHOICE IMAGE BUTTON*/}
-                        <TouchableOpacity
-                            activeOpacity={0.6}
-                            style={{paddingRight: 10}}
-                            onPress={() => this.choiceImage()}
-                        >
-                            <IconDefault
-                                name={"Entypo|folder-images"}
-                                size={20}
-                                color={color.disableColor}
-                            />
-                        </TouchableOpacity>
-                        {/*END CHOICE IMAGE BUTTON*/}
-
-                        {/*CHOICE VIDEO BUTTON*/}
-                        <TouchableOpacity
-                            activeOpacity={0.6}
-                            onPress={() => this.choiceVideo()}
-                        >
-                            <IconDefault
-                                name={"Entypo|folder-video"}
-                                size={20}
-                                color={color.disableColor}
-                            />
-                        </TouchableOpacity>
-                        {/*END CHOICE VIDEO BUTTON*/}
-                    </View>
                 </KeyboardAvoidingView>
+
                 {/*END FOOTER*/}
 
                 <ModalProcess
@@ -293,8 +451,8 @@ const style = {
     },
     wrapperBottom: {
         width: deviceWidth,
-        borderTopWidth: 0.5,
-        borderColor: 'rgba(0,0,0,0.2)',
+        borderTopWidth: 1,
+        borderColor: "#ccc",
         flexDirection: 'row',
         padding: 10,
         bottom: 0,
@@ -338,11 +496,19 @@ const style = {
         borderRadius: 50,
         borderWidth: 1,
         borderColor: color.disableColor,
-        paddingLeft: 5,
+        paddingLeft: 7,
         paddingRight: 10,
+        paddingVertical: 3
     },
     containerEditor: {
         flex: 1,
+        backgroundColor: color.background
+    },
+    textTitle: {
+        marginHorizontal: 7,
+        paddingVertical: 5,
+        borderBottomWidth: 1,
+        borderColor: '#cccccc'
     },
     shadow: isIOS
         ?

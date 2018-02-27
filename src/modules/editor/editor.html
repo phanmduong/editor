@@ -2,12 +2,22 @@
 <html>
 <head>
     <title>KEETOOL EDITOR</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"/>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0,height=device-height"/>
     <meta name="format-detection" content="telephone=no">
     <style type="text/css">
-        body, html {
+        html {
+            height: auto;
             overflow: hidden;
-            height: 95vh;
+        }
+
+        body {
+            height: 96vh;
+            overflow: hidden;
+        }
+
+        img, video {
+            overflow: hidden;
         }
 
         div.keetool_editor_content {
@@ -23,6 +33,7 @@
             width: 99%;
             margin-top: 15px;
             margin-bottom: 15px;
+            background-color: rgba(25, 61, 98, 0.91);
         }
 
         img {
@@ -38,123 +49,102 @@
         [contenteditable]:focus {
             outline: 0px solid transparent;
         }
-
-
     </style>
 </head>
-
 <body id="body-content">
 <div id="keetool_editor_content" class="keetool_editor_content" contenteditable="true"
-     placeholder="Enter text here..."
+     onselect="saveSelection()" onclose="saveSelection()"
+     onkeypress="saveSelection();" onblur="saveSelection();" onfocus="restoreSelection();" onclick="saveSelection();"
 ></div>
 </body>
 <script>
 
-    var sel;
+    var savedRange;
+
+    // //Set cursor at the end
+    function setEndOfContenteditable(contentEditableElement) {
+        var range, selection;
+        range = document.createRange(); //Create a range (a range is a like the selection but invisible)
+        range.selectNodeContents(contentEditableElement); //Select the entire contents of the element with the range
+        range.collapse(false); //collapse the range to the end point. false means collapse to end rather than the start
+        selection = window.getSelection(); //get the selection object (allows you to change selection)
+        selection.removeAllRanges(); //remove any selections already made
+        selection.addRange(range); //make the range you have just created the visible selection
+    }
 
     function insertImage(url) {
-        var html = '<div><img src="' + url + '"></div>';
-        pasteHtmlAtCaret(html);
+        var elem = document.getElementById('keetool_editor_content');
+        document.getElementById('keetool_editor_content').focus();
+        if (savedRange == null) {
+            setEndOfContenteditable(elem);
+        }
+        var html = "<div><img src=\"" + url + "\" width=100% height=auto></div>";
+        document.execCommand("insertHTML", false, html);
     }
 
     function insertVideo(url) {
-        var html = '<video controls>' +
+        var elem = document.getElementById('keetool_editor_content');
+        if (savedRange == null) {
+            setEndOfContenteditable(elem);
+        }
+        document.getElementById('keetool_editor_content').focus();
+        var html = '<video controls onclick="blurEditor()">' +
             ' <source src="' + url + '" type="video/mp4">' +
             '</video>';
-        pasteHtmlAtCaret(html);
+        document.execCommand("insertHTML", false, html);
     }
 
-    function pasteHtmlAtCaret(html) {
-        document.getElementById('keetool_editor_content').focus();
-        var range;
-        sel = window.getSelection();
-        if (sel.getRangeAt && sel.rangeCount) {
-            range = sel.getRangeAt(0);
-            range.deleteContents();
-
-            var el = document.createElement("div");
-            el.innerHTML = html;
-            var frag = document.createDocumentFragment(), node, lastNode;
-            var i = 1;
-            while ((node = el.firstChild)) {
-                lastNode = frag.appendChild(node);
-                i++;
-            }
-            console.log(i);
-            range.insertNode(frag);
-            console.log(range);
-
-            if (lastNode) {
-                range = range.cloneRange();
-                range.setStartAfter(lastNode);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
-        }
+    function blurEditor() {
+        document.getElementById("keetool_editor_content").blur();
     }
 
-    // resetHeight();
-
-    function resetHeight() {
-        console.log('dsa');
-        document.getElementById("body-content").style.height = '80%';
-    }
-
-    function getCursorPosition() {
-        // var range, sel = window.getSelection();
-        // if (sel.getRangeAt && sel.rangeCount) {
-        //     range = sel.getRangeAt(0);
-        //     console.log(range);
-        // }
-        // document.getElementById('keetool_editor_content').focus();
-        // console.log(getInputSelection(document.getElementById('keetool_editor_content')))
-    }
-
-    function getInputSelection(el) {
-        var start = 0, end = 0, normalizedValue, range,
-            textInputRange, len, endRange;
-
-        if (typeof el.selectionStart == "number" && typeof el.selectionEnd == "number") {
-            start = el.selectionStart;
-            end = el.selectionEnd;
-        } else {
-            range = document.createRange();
-
-            if (range && range.parentElement() == el) {
-                len = el.value.length;
-                normalizedValue = el.value.replace(/\r\n/g, "\n");
-
-                // Create a working TextRange that lives only in the input
-                textInputRange = el.createTextRange();
-                textInputRange.moveToBookmark(range.getBookmark());
-
-                // Check if the start and end of the selection are at the very end
-                // of the input, since moveStart/moveEnd doesn't return what we want
-                // in those cases
-                endRange = el.createTextRange();
-                endRange.collapse(false);
-
-                if (textInputRange.compareEndPoints("StartToEnd", endRange) > -1) {
-                    start = end = len;
-                } else {
-                    start = -textInputRange.moveStart("character", -len);
-                    start += normalizedValue.slice(0, start).split("\n").length - 1;
-
-                    if (textInputRange.compareEndPoints("EndToEnd", endRange) > -1) {
-                        end = len;
-                    } else {
-                        end = -textInputRange.moveEnd("character", -len);
-                        end += normalizedValue.slice(0, end).split("\n").length - 1;
-                    }
-                }
-            }
-        }
-
-        return {
-            start: start,
-            end: end
+    function saveEditor() {
+        let data = {
+            message: 'save',
+            content: document.getElementById("keetool_editor_content").innerHTML
         };
+        WebViewBridge.send(JSON.stringify(data));
     }
+
+
+    function setContent(content) {
+        document.getElementById("keetool_editor_content").innerHTML = content.replace(/@/g, "\"");
+        // document.getElementById("keetool_editor_content").innerHTML = content;
+    }
+
+    // Return cursor when insert image, video, etc.
+
+    window.saveSelection = function () {
+        console.log("save");
+        if (window.getSelection)//non IE Browsers
+        {
+            savedRange = window.getSelection().getRangeAt(0);
+        }
+        else if (document.selection)//IE
+        {
+            savedRange = document.selection.createRange();
+        }
+    };
+
+    window.restoreSelection = function () {
+        if (savedRange != null) {
+            if (window.getSelection)//non IE and there is already a selection
+            {
+                var s = window.getSelection();
+                if (s.rangeCount > 0)
+                    s.removeAllRanges();
+                s.addRange(savedRange);
+            }
+            else if (document.createRange)//non IE and no selection
+            {
+                window.getSelection().addRange(savedRange);
+            }
+            else if (document.selection)//IE
+            {
+                savedRange.select();
+            }
+        }
+    };
+
 </script>
 </html>

@@ -6,8 +6,7 @@ import {
     View,
     Platform,
     StyleSheet,
-    Dimensions,
-    KeyboardAvoidingView
+    Dimensions, AsyncStorage,
 } from 'react-native';
 // NATIVE-BASE LIBRARY
 import {Container, Content} from 'native-base';
@@ -15,6 +14,33 @@ import {Container, Content} from 'native-base';
 import IconDefault from '../../commons/IconDefault';
 
 class PostListContainer extends Component {
+    constructor() {
+        super();
+        this.state = {
+            title: ''
+        }
+    }
+
+    componentWillMount() {
+        this.getData();
+    }
+
+    async getData() {
+        try {
+            var post = await AsyncStorage.getItem('@Editor:editor');
+
+            post = JSON.parse(post);
+
+            this.setState({
+                title: post ? post.title : ''
+            });
+
+        }
+
+        catch (error) {
+        }
+    };
+
     render() {
         const {navigate} = this.props.navigation;
         return (
@@ -44,7 +70,10 @@ class PostListContainer extends Component {
                     {/*CONTENT*/}
                     <TouchableOpacity
                         activeOpacity={1}
-                        onPress={() => navigate('PostDetailContainer')}
+                        onPress={() => navigate('PostDetailContainer', {
+                                id: 1,
+                            }
+                        )}
                     >
                         <View style={styles.imagePost}>
                             <Image
@@ -54,8 +83,17 @@ class PostListContainer extends Component {
                             />
                         </View>
                         <View style={styles.marginTopBottom}>
-                            <Text style={styles.textTitlePost}>Title</Text>
-                            <Text style={styles.textDescriptionPost}>Description</Text>
+                            <Text style={styles.textTitlePost}>{this.state.title}</Text>
+                            <TouchableOpacity
+                                activeOpacity={1}
+                                onPress={() => navigate('EditorContainer', {
+                                        id: 1,
+                                    }
+                                )}
+                            >
+                                <Text style={styles.textDescriptionPost}>Edit</Text>
+                            </TouchableOpacity>
+
                         </View>
                     </TouchableOpacity>
                     {/*END CONTENT*/}
@@ -122,12 +160,12 @@ const style = {
         marginTop: 10,
         marginBottom: 10,
     },
-    imagePost:{
+    imagePost: {
         borderRadius: 15,
         height: deviceHeight / 3,
         backgroundColor: color.background
     },
-    textTitlePost:{
+    textTitlePost: {
         fontWeight: 'bold'
     }
 

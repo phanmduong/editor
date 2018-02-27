@@ -1,6 +1,7 @@
 import React from 'react';
 import {WebView, View, Text, Dimensions} from "react-native";
 import PropTypes from 'prop-types';
+
 const BODY_TAG_PATTERN = /\<\/ *body\>/;
 
 var script = `
@@ -36,51 +37,9 @@ const style = `
     left: 0;
     right: 0;
 }
-a ,p, li, h1, h2, h3, h4, h5, h6, table {
-    padding-left: 10px;
-    padding-right: 10px;
-}
-p{
-    font-size: 15px;
-}
-span{
-}
-h1, h2, h3, h4, h5, h6{
-    font-weight: 400;
-}
-h1, h2 {
-    font-size: 20px;
-}
-h3, h4 {
-    font-size: 18px;
-}
-h5, h6 {
-    font-size: 16px;
-}
-ul li:{
-    font-size: 15px;
-}
-ol li:{
-}
-
-table, th, td{
-    margin: 5px;
-    padding: 5px;
-    border: 1px solid black;
-    border-collapse: collapse;
-    text-align: center;
-}
-p.wrapperImg{
-    padding-left: 0;
-    padding-right: 0;
-}
-table:{
-    margin: 10px;
-    padding: 10px;
-}
-iframe{
-    width: 100%;
-    height: 150px;
+img, video{
+width: 100%;
+height: auto;
 }
 </style>
 <script >
@@ -113,10 +72,9 @@ class WebViewAutoHeight extends React.Component {
 
     render() {
         const {source, style, ...otherProps} = this.props;
-        let sourceData = source.replace(/width: 100%px/g, 'width: 100%');
         const html = '<!DOCTYPE html><html><head><meta charset=UTF-8"/></head><body>'
             +
-            sourceData.replace(/<p><img/g, '<p class="wrapperImg"><img')
+            source
             +
             '</body></html>';
 
@@ -135,7 +93,7 @@ class WebViewAutoHeight extends React.Component {
                     {...otherProps}
                     source={{html: codeInject(html)}}
                     scrollEnabled={false}
-                    style={{...style, ...{height: this.state.realContentHeight, width: width, fontFamily: 'Montserrat-Regular'}}}
+                    style={{...style, ...{height: this.state.realContentHeight, width: width}}}
                     javaScriptEnabled
                     onNavigationStateChange={this.handleNavigationChange}
                 />
@@ -146,7 +104,7 @@ class WebViewAutoHeight extends React.Component {
 };
 
 WebViewAutoHeight.propTypes = {
-    source: PropTypes.object.isRequired,
+    source: PropTypes.string.isRequired,
     injectedJavaScript: PropTypes.string,
     minHeight: PropTypes.number,
     onNavigationStateChange: PropTypes.func,
