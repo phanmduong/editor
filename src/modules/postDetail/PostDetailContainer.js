@@ -13,6 +13,8 @@ import {Container, Content} from 'native-base';
 import IconDefault from '../../commons/IconDefault';
 // TIME LIBRARY
 import WebViewAutoHeight from '../../commons/WebViewAutoHeight';
+import {injectScript} from "../editor/constants";
+import WebViewBridge from 'react-native-webview-bridge-updated';
 
 class PostDetailContainer extends Component {
     constructor() {
@@ -22,11 +24,18 @@ class PostDetailContainer extends Component {
         }
     }
 
+    /**
+     * Get data post
+     **/
     async getData() {
         try {
             var post = await AsyncStorage.getItem('@Editor:editor');
 
             post = JSON.parse(post);
+            const data = {
+                message: "content",
+                content: post.content ? post.content.replace(/"/gi, "@keetool@").replace(/\\/gi, "#keetool#").replace(/'/gi, "%keetool%") : ''
+            };
 
             this.setState({
                 date: post.date,
@@ -34,6 +43,11 @@ class PostDetailContainer extends Component {
                 title: post.title,
                 content: post.content ? post.content : ''
             });
+
+            const {webviewbridge} = this.refs;
+            setTimeout(function () {
+                webviewbridge.sendToBridge(JSON.stringify(data));
+            }, 500);
         }
 
         catch (error) {
@@ -51,6 +65,8 @@ class PostDetailContainer extends Component {
     render() {
         const {navigate} = this.props.navigation;
         const {goBack} = this.props.navigation;
+        const pageSource = require('./view.html');
+
 
         return (
             <Container style={styles.wrapperContainer}>
@@ -78,10 +94,13 @@ class PostDetailContainer extends Component {
                     <Text style={styles.textRed}>{this.state.public ? 'Public' : 'non-public'}</Text>
                 </View>
                 {/*BODY*/}
-                <Content style={styles.wrapperBody}>
-                    <WebViewAutoHeight
-                        source={this.state.content}/>
-                </Content>
+                <View style={styles.wrapperBody}>
+                    <WebViewBridge
+                        scrollEnabled={false}
+                        ref="webviewbridge"
+                        injectedJavaScript={injectScript}
+                        source={pageSource}/>
+                </View>
                 {/*END BODY*/}
             </Container>
         );

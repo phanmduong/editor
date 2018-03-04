@@ -1,4 +1,5 @@
 import ImagePicker from 'react-native-image-picker';
+import {Platform} from "react-native";
 
 let optionsImage = {
     mediaType: 'image',
@@ -63,7 +64,7 @@ export let choiceImage = (openLibrary, completeHandler, progressHandler, error) 
             openLibrary();
             let source = {
                 uri: response.uri,
-                name: response.fileName,
+                name: response.fileName ? response.fileName : 'image.png',
                 type: 'image/*',
             };
             console.log(source);
@@ -71,6 +72,8 @@ export let choiceImage = (openLibrary, completeHandler, progressHandler, error) 
         }
     });
 }
+
+const isIOS = Platform.OS === 'ios';
 
 /**
  * FUNCTION CHOICE VIDEO FROM LIBRARY

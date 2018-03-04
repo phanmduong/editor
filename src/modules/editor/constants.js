@@ -22,6 +22,12 @@ export const injectScript = `
                         if (data.message == "content"){
                             setContent(data.content);
                         }
+                        if (data.message == "keyboardShow"){
+                            keyboardShow();
+                        }
+                        if (data.message == "keyboardHide"){
+                            keyboardHide();
+                        }
                       };
                     }
                   }())

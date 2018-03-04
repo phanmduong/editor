@@ -41,6 +41,9 @@ img, video{
 width: 100%;
 height: auto;
 }
+video {
+background-color: rgba(25, 61, 98, 0.91);
+}
 </style>
 <script >
 ${script}

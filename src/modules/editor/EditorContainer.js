@@ -8,9 +8,7 @@ import {
     StyleSheet,
     Dimensions,
     KeyboardAvoidingView,
-    ToastAndroid,
     Keyboard,
-    TextInput,
     AsyncStorage
 } from 'react-native';
 // NATIVE-BASE LIBRARY
@@ -39,17 +37,10 @@ class EditorContainer extends Component {
                 color: color.disableColor,
                 label: "NON - PUBLIC"
             },
-            title: '',
             progressUpload: 0,
             isUploading: false,
         };
     }
-
-
-    keyboardWillShow(e) {
-        console.log(e.endCoordinates.height);
-    }
-
 
     /**
      * Get data post
@@ -61,7 +52,7 @@ class EditorContainer extends Component {
             post = JSON.parse(post);
             const data = {
                 message: "content",
-                content: post.content ? post.content.replace(/"/g, "@") : ''
+                content: post.content ? post.content.replace(/"/gi, "@keetool@").replace(/\\/gi, "#keetool#").replace(/'/gi, "%keetool%") : ''
             };
 
             const status = post.public && post.public ? {
@@ -79,13 +70,12 @@ class EditorContainer extends Component {
             this.setState({
                 date: post.date,
                 status: status,
-                title: post.title,
             });
 
             const {webviewbridge} = this.refs;
             setTimeout(function () {
                 webviewbridge.sendToBridge(JSON.stringify(data));
-            }, 100);
+            }, 500);
         }
 
         catch (error) {
@@ -93,8 +83,8 @@ class EditorContainer extends Component {
     };
 
     componentWillMount() {
-        this.keyboardWillShowListener = Keyboard.addListener(
-            'keyboardWillShow', this.keyboardWillShow.bind(this));
+        this.keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', this.keyboardDidShow.bind(this));
+        this.keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', this.keyboardDidHide.bind(this));
 
         //if params has id then edit post else new post
         const {params} = this.props.navigation.state;
@@ -102,6 +92,29 @@ class EditorContainer extends Component {
         if (postId) {
             this.getData();
         }
+    }
+
+    keyboardDidShow() {
+        const {webviewbridge} = this.refs;
+        console.log("show");
+        const data = {
+            message: "keyboardShow",
+        };
+        webviewbridge.sendToBridge(JSON.stringify(data));
+    }
+
+    keyboardDidHide() {
+        const {webviewbridge} = this.refs;
+        const data = {
+            message: "keyboardHide",
+        };
+        console.log("hide");
+        webviewbridge.sendToBridge(JSON.stringify(data));
+    }
+
+    componentWillUnmount() {
+        this.keyboardDidShowListener.remove();
+        this.keyboardDidHideListener.remove();
     }
 
 // FUNCTION CHOICE IMAGE
@@ -136,7 +149,6 @@ class EditorContainer extends Component {
             data.message = 'image';
             webviewbridge.sendToBridge(JSON.stringify(data));
         } else {
-            ToastAndroid.show(data.link, ToastAndroid.SHORT);
             data.message = 'video';
             webviewbridge.sendToBridge(JSON.stringify(data));
         }
@@ -302,7 +314,7 @@ class EditorContainer extends Component {
                                         },
                                         dateText: {
                                             color: color.mainColor,
-                                            fontSize: 12,
+                                            fontSize: 13,
                                         }
                                     }}
                                     onDateChange={(date) => {
@@ -315,7 +327,7 @@ class EditorContainer extends Component {
                                         <IconDefault
                                             name={"FontAwesome|calendar"}
                                             color={color.mainColor}
-                                            size={10}
+                                            size={12}
                                             style={{paddingLeft: 0}}
                                         />}
                                 />
@@ -338,7 +350,7 @@ class EditorContainer extends Component {
                                     <Text
                                         style={[styles.textButtonDisable, {
                                             color: status.color,
-                                            fontSize: 12
+                                            fontSize: 13
                                         }]}>{status.label}</Text>
                                 </TouchableOpacity>
                             </Right>
@@ -352,14 +364,8 @@ class EditorContainer extends Component {
 
                 <KeyboardAvoidingView behavior={isIOS ? 'padding' : null} style={{flex: 1}}>
                     <View style={style.containerEditor}>
-                        <TextInput
-                            style={styles.textTitle}
-                            onChangeText={(text) => this.setState({title: text})}
-                            value={this.state.title}
-                        />
-
                         <WebViewBridge
-                            style={{marginBottom: -2}}
+                            style={{marginBottom: -10, borderWidth: 0}}
                             scrollEnabled={false}
                             ref="webviewbridge"
                             onBridgeMessage={this.onBridgeMessage.bind(this)}
@@ -445,7 +451,8 @@ const style = {
         backgroundColor: color.background,
     },
     wrapperBody: {
-        margin: 10,
+        marginHorizontal: 10,
+        marginTop: 10,
         backgroundColor: color.background,
 
     },

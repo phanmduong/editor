@@ -10,12 +10,15 @@ class ModalProcess extends React.Component {
     }
 
     componentWillReceiveProps(nextProps) {
+        console.log(nextProps.openModal);
         if (nextProps.openModal !== this.props.openModal && nextProps.openModal) {
             this._modal.open();
         }
-        if (nextProps.openModal !== this.props.openModal && !nextProps.openModal) {
+
+        if (!nextProps.openModal) {
             this._modal.close();
         }
+
     }
 
     render() {
