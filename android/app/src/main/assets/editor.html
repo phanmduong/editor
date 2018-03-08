@@ -30,16 +30,22 @@
         }
 
         video {
+            height: auto;
             width: 99%;
             margin-top: 15px;
             margin-bottom: 15px;
             background-color: rgba(25, 61, 98, 0.91);
         }
 
+        div {
+            background-color: white !important;
+        }
+
         img {
             width: 99%;
             margin-top: 15px;
             margin-bottom: 15px;
+            background-color: rgba(25, 61, 98, 0.91);
         }
 
         [contenteditable=true]:empty:before {
@@ -53,14 +59,16 @@
 </head>
 <body id="body-content">
 <div id="keetool_editor_content" class="keetool_editor_content" contenteditable="true"
-     onselect="saveSelection()" onclose="saveSelection()"
-     onkeypress="saveSelection();" onblur="saveSelection();" onfocus="restoreSelection();"
-     onclick="saveSelection();"
-></div>
+     onblur="onDivBlur(); saveSelection()" onclick="return cancelEvent(event);"
+     onkeypress="saveSelection()" ; onmouseup="saveSelection()"
+     onmouseenter="saveSelection()"
+>
+</div>
 </body>
 <script>
 
     var savedRange;
+    var currentElement;
 
     function keyboardShow() {
         scrollView();
@@ -68,9 +76,13 @@
     }
 
     function keyboardHide() {
+        setTimeout(function () {
+            onDivBlur();
+            saveSelection();
+        }, 200);
+
         document.getElementById('body-content').style.height = "96vh";
     }
-
 
     // //Set cursor at the end
     function setEndOfContenteditable(contentEditableElement) {
@@ -81,27 +93,71 @@
         selection = window.getSelection(); //get the selection object (allows you to change selection)
         selection.removeAllRanges(); //remove any selections already made
         selection.addRange(range); //make the range you have just created the visible selection
+        // savedRange = range;
     }
 
     function insertImage(url) {
         var elem = document.getElementById('keetool_editor_content');
         document.getElementById('keetool_editor_content').focus();
+
+        var image = document.createElement('img');
+        image.src = url;
+
         if (savedRange == null) {
             setEndOfContenteditable(elem);
         }
-        var html = "<img src=\"" + url + "\" width=100% height=auto><div><br></div>";
-        document.execCommand("insertHTML", false, html);
+        savedRange.insertNode(image);
+
+        currentElement = image;
+        isInFocus = true;
+        scrollView();
+    }
+
+    function setSourceElement(url) {
+        if (currentElement) {
+            currentElement.setAttribute("src", url);
+        }
+    }
+
+    function htmlToElements(html) {
+        var template = document.createElement('div');
+        template.innerHTML = html;
+        return template;
     }
 
     function insertVideo(url) {
         var elem = document.getElementById('keetool_editor_content');
+        document.getElementById('keetool_editor_content').focus();
         if (savedRange == null) {
             setEndOfContenteditable(elem);
         }
-        document.getElementById('keetool_editor_content').focus();
-        var html = '<div><br></div><video controls preload="meta" onplay="blurEditor()" onclick="blurEditor();"  src="' + url + '" type="video/mp4"' +
-            '></video><div><br></div>';
-        document.execCommand("insertHTML", false, html);
+
+        var elements = document.createElement('div');
+
+        var divbr1 = document.createElement('div');
+        divbr1.innerHTML = "<br>";
+        elements.appendChild(divbr1);
+        var video = document.createElement("video");
+        video.src = url;
+        video.type = "video/mp4";
+        video.onclick = function () {
+            blurEditor();
+        };
+        video.onplay = function () {
+            blurEditor();
+        };
+        video.controls = true;
+        elements.appendChild(video);
+
+        var divbr2 = document.createElement('div');
+        divbr2.innerHTML = "<br>";
+        elements.appendChild(divbr2);
+
+        savedRange.insertNode(elements);
+
+        currentElement = video;
+        isInFocus = true;
+        scrollView();
     }
 
     function blurEditor() {
@@ -146,7 +202,12 @@
 
     function scrollView() {
         setTimeout(function () {
-            getSelectedNode().scrollIntoView();
+            if (savedRange) {
+                var div = document.createTextNode(" ");
+                savedRange.insertNode(div);
+                getSelectedNode().scrollIntoView();
+                div.parentNode.removeChild(div);
+            }
         }, 100);
     }
 
@@ -166,6 +227,7 @@
 
     // Return cursor when insert image, video, etc.
 
+    var isInFocus = false;
     window.saveSelection = function () {
         if (window.getSelection)//non IE Browsers
         {
@@ -175,9 +237,10 @@
         {
             savedRange = document.selection.createRange();
         }
-    };
+    }
 
     window.restoreSelection = function () {
+        isInFocus = true;
         if (savedRange != null) {
             if (window.getSelection)//non IE and there is already a selection
             {
@@ -195,7 +258,25 @@
                 savedRange.select();
             }
         }
-    };
+    }
+    //this part onwards is only needed if you want to restore selection onclick
+    window.onDivBlur = function () {
+        isInFocus = false;
+    }
+
+    window.cancelEvent = function (e) {
+        if (isInFocus == false && savedRange != null) {
+            if (e && e.preventDefault) {
+                e.stopPropagation(); // DOM style (return false doesn't always work in FF)
+                e.preventDefault();
+            }
+            else {
+                window.event.cancelBubble = true;//IE stopPropagation
+            }
+            restoreSelection();
+            return false; // false = IE style
+        }
+    }
 
 </script>
 </html>
