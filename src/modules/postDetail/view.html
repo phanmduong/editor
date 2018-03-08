@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KEETOOL EDITOR</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0,height=device-height"/>
+    <meta name="format-detection" content="telephone=no">
+    <style type="text/css">
+        html {
+            height: auto;
+        }
+
+        body {
+            height: 98vh;
+        }
+
+        img, video {
+        }
+
+        div.keetool_editor_content {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000;
+            width: 100%;
+            height: 100%;
+            -webkit-overflow-scrolling: touch;
+            overflow: scroll;
+        }
+
+        video {
+            width: 99%;
+            height: 100%;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            background-color: rgba(25, 61, 98, 0.91);
+        }
+
+        img {
+            width: 99%;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body id="body-content">
+<div id="keetool_editor_content" class="keetool_editor_content"></div>
+</body>
+<script>
+    function setContent(content) {
+        document.getElementById("keetool_editor_content").innerHTML = content.replace(/@keetool@/gi, "\"")
+            .replace(/#keetool#/gi, "\\").replace(/%keetool%/gi, "'");
+    }
+</script>
+</html>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KEETOOL EDITOR</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0,height=device-height"/>
+    <meta name="format-detection" content="telephone=no">
+    <style type="text/css">
+        html {
+            height: auto;
+            overflow: hidden;
+        }
+
+        body {
+            height: 96vh;
+            overflow: hidden;
+        }
+
+        img, video {
+            overflow: hidden;
+        }
+
+        div.keetool_editor_content {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000;
+            width: 100%;
+            height: 98%;
+            -webkit-overflow-scrolling: touch;
+            overflow: scroll;
+        }
+
+        video {
+            height: auto;
+            width: 99%;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            background-color: rgba(25, 61, 98, 0.91);
+        }
+
+        div {
+            background-color: white !important;
+        }
+
+        img {
+            width: 99%;
+            margin-top: 15px;
+            margin-bottom: 15px;
+
+        }
+
+        [contenteditable=true]:empty:before {
+            content: attr(placeholder);
+        }
+
+        [contenteditable]:focus {
+            outline: 0px solid transparent;
+        }
+    </style>
+</head>
+<body id="body-content">
+<div id="keetool_editor_content" class="keetool_editor_content" contenteditable="true"
+     onblur="onDivBlur();saveSelection();" onmousedown="return cancelEvent(event);" onclick="return cancelEvent(event);"
+     onmouseup="saveSelection();" onkeyup="saveSelection();"
+>
+</div>
+</body>
+<script>
+
+    var savedRange;
+    var currentElement;
+    var isInFocus = false;
+
+
+    function keyboardShow() {
+        scrollView();
+        document.getElementById('body-content').style.height = "90vh";
+    }
+
+    function keyboardHide() {
+        saveSelection();
+        onDivBlur();
+        document.getElementById('body-content').style.height = "96vh";
+    }
+
+    // //Set cursor at the end
+    function setEndOfContenteditable(contentEditableElement) {
+        var range, selection;
+        range = document.createRange(); //Create a range (a range is a like the selection but invisible)
+        range.selectNodeContents(contentEditableElement); //Select the entire contents of the element with the range
+        range.collapse(false); //collapse the range to the end point. false means collapse to end rather than the start
+        selection = window.getSelection(); //get the selection object (allows you to change selection)
+        selection.removeAllRanges(); //remove any selections already made
+        selection.addRange(range); //make the range you have just created the visible selection
+        savedRange = range;
+    }
+
+    function insertImage(url) {
+        var elem = document.getElementById('keetool_editor_content');
+        document.getElementById('keetool_editor_content').focus();
+
+        var image = document.createElement('img');
+        image.src = url;
+
+        if (savedRange == null) {
+            setEndOfContenteditable(elem);
+        }
+        savedRange.insertNode(image);
+
+        currentElement = image;
+
+        setTimeout(function () {
+            image.scrollIntoView()
+        }, 200);
+
+    }
+
+    function setSourceElement(url) {
+        if (currentElement) {
+            currentElement.setAttribute("src", url);
+        }
+    }
+
+    function insertVideo(url) {
+        var elem = document.getElementById('keetool_editor_content');
+        document.getElementById('keetool_editor_content').focus();
+        if (savedRange == null) {
+            setEndOfContenteditable(elem);
+        }
+
+        var elements = document.createElement('div');
+
+        var divbr1 = document.createElement('div');
+        divbr1.innerHTML = "<br><div> </div>";
+        elements.appendChild(divbr1);
+        var video = document.createElement("video");
+        video.src = url;
+        video.type = "video/mp4";
+        video.onclick = function () {
+            blurEditor();
+        };
+        video.onplay = function () {
+            blurEditor();
+        };
+        video.controls = true;
+        elements.appendChild(video);
+
+        var divbr2 = document.createElement('div');
+        divbr2.innerHTML = "<br><div> </div>";
+        elements.appendChild(divbr2);
+
+        savedRange.insertNode(elements);
+
+        currentElement = video;
+
+        setTimeout(function () {
+            elements.scrollIntoView()
+        }, 200);
+    }
+
+    function blurEditor() {
+        document.getElementById("keetool_editor_content").blur();
+    }
+
+    function getSelectedNode() {
+        if (savedRange == null) {
+            if (document.selection)
+                return document.selection.createRange().parentElement();
+            else {
+                var selection = window.getSelection();
+                if (selection.rangeCount > 0)
+                    return selection.getRangeAt(0).startContainer.parentNode;
+            }
+        } else {
+            return savedRange.startContainer.parentNode
+        }
+    }
+
+    function scrollView() {
+        setTimeout(function () {
+            getSelectedNode().scrollIntoView();
+            setTimeout(function () {
+                if (savedRange) {
+                    var div = document.createTextNode(" ");
+                    savedRange.insertNode(div);
+                    setTimeout(function () {
+                        div.parentNode.removeChild(div);
+                    }, 100);
+                }
+            }, 100);
+        }, 200);
+
+    }
+
+    function saveEditor() {
+        let data = {
+            message: 'save',
+            content: document.getElementById("keetool_editor_content").innerHTML
+        };
+        WebViewBridge.send(JSON.stringify(data));
+    }
+
+
+    function setContent(content) {
+        document.getElementById("keetool_editor_content").innerHTML = content.replace(/@keetool@/gi, "\"")
+            .replace(/#keetool#/gi, "\\").replace(/%keetool%/gi, "'");
+    }
+
+    // Return cursor when insert image, video, etc.
+
+    function saveSelection() {
+        if (window.getSelection)//non IE Browsers
+        {
+            savedRange = window.getSelection().getRangeAt(0);
+        }
+        else if (document.selection)//IE
+        {
+            savedRange = document.selection.createRange();
+        }
+    }
+
+    function restoreSelection() {
+        isInFocus = true;
+        document.getElementById("keetool_editor_content").focus();
+        if (savedRange != null) {
+            if (window.getSelection)//non IE and there is already a selection
+            {
+                var s = window.getSelection();
+                if (s.rangeCount > 0)
+                    s.removeAllRanges();
+                s.addRange(savedRange);
+            }
+            else if (document.createRange)//non IE and no selection
+            {
+                window.getSelection().addRange(savedRange);
+            }
+            else if (document.selection)//IE
+            {
+                savedRange.select();
+            }
+        }
+    }
+
+    //this part onwards is only needed if you want to restore selection onclick
+    function onDivBlur() {
+        isInFocus = false;
+    }
+
+    function cancelEvent(e) {
+        if (isInFocus == false && savedRange != null) {
+            if (e && e.preventDefault) {
+                //alert("FF");
+                e.stopPropagation(); // DOM style (return false doesn't always work in FF)
+                e.preventDefault();
+            }
+            else {
+                window.event.cancelBubble = true;//IE stopPropagation
+            }
+            restoreSelection();
+            return false; // false = IE style
+        }
+    }
+
+</script>
+</html>
