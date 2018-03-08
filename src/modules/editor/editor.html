@@ -98,18 +98,28 @@
         var elem = document.getElementById('keetool_editor_content');
         document.getElementById('keetool_editor_content').focus();
 
-        var image = document.createElement('img');
-        image.src = url;
 
         if (savedRange == null) {
             setEndOfContenteditable(elem);
         }
-        savedRange.insertNode(image);
+
+        var elements = document.createElement('div');
+
+        var image = document.createElement("img");
+        image.src = url;
+        elements.appendChild(image);
+
+        var divbr2 = document.createElement('div');
+        divbr2.innerHTML = "<br>";
+        elements.appendChild(divbr2);
+        console.log(elements);
+
+        savedRange.insertNode(elements);
 
         currentElement = image;
 
         setTimeout(function () {
-            image.scrollIntoView()
+            divbr2.scrollIntoView()
         }, 200);
 
     }
@@ -153,7 +163,7 @@
         currentElement = video;
 
         setTimeout(function () {
-            elements.scrollIntoView()
+            divbr2.scrollIntoView()
         }, 200);
     }
 
@@ -186,7 +196,7 @@
                         div.parentNode.removeChild(div);
                     }, 100);
                 }
-            }, 100);
+            }, 200);
         }, 200);
 
     }

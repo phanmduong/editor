@@ -187,9 +187,8 @@ class EditorContainer extends Component {
      **/
     error = (error) => {
         this.setState({isUploading: false});
-        var data = JSON.parse(event.currentTarget.response);
         const {webviewbridge} = this.refs;
-        data = {
+        let data = {
             link: UPLOAD_ERROR
         };
 
@@ -403,7 +402,7 @@ class EditorContainer extends Component {
 
                 <KeyboardAvoidingView behavior={isIOS ? 'padding' : null} style={{flex: 1}}>
                     <View style={style.containerEditor}>
-                        <TouchableOpacity style={{flex: 1}} onPress={this.saveSelecton}>
+                        <TouchableOpacity style={{flex: 1}} activeOpacity={1} onPress={this.saveSelecton}>
                             <WebViewBridge
 
                                 style={{marginBottom: -10, borderWidth: 0}}
