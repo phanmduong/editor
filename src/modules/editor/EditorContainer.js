@@ -402,16 +402,28 @@ class EditorContainer extends Component {
 
                 <KeyboardAvoidingView behavior={isIOS ? 'padding' : null} style={{flex: 1}}>
                     <View style={style.containerEditor}>
-                        <TouchableOpacity style={{flex: 1}} activeOpacity={1} onPress={this.saveSelecton}>
-                            <WebViewBridge
+                        {
+                            isIOS ?
+                                <TouchableOpacity style={{flex: 1}} activeOpacity={1} onPress={this.saveSelecton}>
+                                    <WebViewBridge
+                                        style={{marginBottom: -10, borderWidth: 0}}
+                                        scrollEnabled={false}
+                                        ref="webviewbridge"
+                                        onBridgeMessage={this.onBridgeMessage.bind(this)}
+                                        injectedJavaScript={injectScript}
+                                        source={pageSource}/>
+                                </TouchableOpacity>
+                                :
+                                <WebViewBridge
+                                    style={{marginBottom: -10, borderWidth: 0}}
+                                    scrollEnabled={false}
+                                    ref="webviewbridge"
+                                    onBridgeMessage={this.onBridgeMessage.bind(this)}
+                                    injectedJavaScript={injectScript}
+                                    source={pageSource}/>
 
-                                style={{marginBottom: -10, borderWidth: 0}}
-                                scrollEnabled={false}
-                                ref="webviewbridge"
-                                onBridgeMessage={this.onBridgeMessage.bind(this)}
-                                injectedJavaScript={injectScript}
-                                source={pageSource}/>
-                        </TouchableOpacity>
+                        }
+
                         {/*FOOTER*/}
                         <View style={[styles.wrapperRowCenter, styles.wrapperBottom]}>
                             {/*CHOICE IMAGE BUTTON*/}
