@@ -61,8 +61,7 @@
 <div id="keetool_editor_content" class="keetool_editor_content" contenteditable="true"
      onblur="saveSelection();" onmousedown="return cancelEvent(event);" onclick="return cancelEvent(event);"
      onmouseup="saveSelection();" onkeyup="saveSelection();"
->
-</div>
+></div>
 </body>
 <script>
 
@@ -96,29 +95,62 @@
     function insertImage(url) {
         var elem = document.getElementById('keetool_editor_content');
         document.getElementById('keetool_editor_content').focus();
-
-
-        if (savedRange == null) {
-            setEndOfContenteditable(elem);
-        }
+        var image, divbr2;
 
         var elements = document.createElement('div');
 
-        var image = document.createElement("img");
+        var divbr1 = document.createElement('div');
+        divbr1.innerHTML = "<br><div> </div>";
+        elements.appendChild(divbr1);
+        image = document.createElement("img");
         image.src = url;
         elements.appendChild(image);
 
-        var divbr2 = document.createElement('div');
-        divbr2.innerHTML = "<br>";
+        divbr2 = document.createElement('div');
+        divbr2.innerHTML = "<br><div> </div>";
         elements.appendChild(divbr2);
-        console.log(elements);
 
-        savedRange.insertNode(elements);
+        if (savedRange == null) {
+            setEndOfContenteditable(elem);
+
+            savedRange.insertNode(elements);
+        } else {
+            var text1 = getSelectedNode().textContent.substr(0, savedRange.startOffset);
+            var text2 = getSelectedNode().textContent.substr(savedRange.startOffset, getSelectedNode().textContent.length);
+            getSelectedNode().parentNode.removeChild(getSelectedNode());
+
+            var tagText1 = document.createElement('div');
+            tagText1.innerHTML = text1;
+            var tagText2 = document.createElement('div');
+            tagText2.innerHTML = text2;
+
+            savedRange.insertNode(tagText2);
+            savedRange.insertNode(elements);
+            savedRange.insertNode(tagText1);
+        }
+
+        if (window.getSelection) {
+            if (window.getSelection().empty) {
+                window.getSelection().empty();
+            } else if (window.getSelection().removeAllRanges) {
+                window.getSelection().removeAllRanges();
+            }
+        } else if (document.selection) {
+            document.selection.empty();
+        }
+        savedRange = null;
+        setTimeout(function () {
+            setEndOfContenteditable(tagText2);
+            savedRange.setStart(tagText2, 0);
+            savedRange.setEnd(tagText2, 0);
+            var div = document.createTextNode(" ");
+            savedRange.insertNode(div);
+            setEndOfContenteditable(div);
+        }, 500);
 
         currentElement = image;
-
         setTimeout(function () {
-            divbr2.scrollIntoView()
+            image.scrollIntoView()
         }, 200);
 
     }
@@ -132,16 +164,15 @@
     function insertVideo(url) {
         var elem = document.getElementById('keetool_editor_content');
         document.getElementById('keetool_editor_content').focus();
-        if (savedRange == null) {
-            setEndOfContenteditable(elem);
-        }
+        var video;
+        var divbr2;
 
         var elements = document.createElement('div');
 
         var divbr1 = document.createElement('div');
         divbr1.innerHTML = "<br><div> </div>";
         elements.appendChild(divbr1);
-        var video = document.createElement("video");
+        video = document.createElement("video");
         video.src = url;
         video.type = "video/mp4";
         video.onclick = function () {
@@ -153,11 +184,48 @@
         video.controls = true;
         elements.appendChild(video);
 
-        var divbr2 = document.createElement('div');
+        divbr2 = document.createElement('div');
         divbr2.innerHTML = "<br><div> </div>";
         elements.appendChild(divbr2);
 
-        savedRange.insertNode(elements);
+        if (savedRange == null) {
+            setEndOfContenteditable(elem);
+            savedRange.insertNode(elements);
+
+
+        } else {
+            var text1 = getSelectedNode().textContent.substr(0, savedRange.startOffset);
+            var text2 = getSelectedNode().textContent.substr(savedRange.startOffset, getSelectedNode().textContent.length);
+            getSelectedNode().parentNode.removeChild(getSelectedNode());
+
+            var tagText1 = document.createElement('div');
+            tagText1.innerHTML = text1;
+            var tagText2 = document.createElement('div');
+            tagText2.innerHTML = text2;
+
+            savedRange.insertNode(tagText2);
+            savedRange.insertNode(elements);
+            savedRange.insertNode(tagText1);
+        }
+
+        if (window.getSelection) {
+            if (window.getSelection().empty) {
+                window.getSelection().empty();
+            } else if (window.getSelection().removeAllRanges) {
+                window.getSelection().removeAllRanges();
+            }
+        } else if (document.selection) {
+            document.selection.empty();
+        }
+        savedRange = null;
+        setTimeout(function () {
+            setEndOfContenteditable(tagText2);
+            savedRange.setStart(tagText2, 0);
+            savedRange.setEnd(tagText2, 0);
+            var div = document.createTextNode(" ");
+            savedRange.insertNode(div);
+            setEndOfContenteditable(div);
+        }, 500);
 
         currentElement = video;
 
@@ -180,7 +248,11 @@
                     return selection.getRangeAt(0).startContainer.parentNode;
             }
         } else {
-            return savedRange.startContainer.parentNode
+            if (savedRange.startContainer.parentNode == document.getElementById("keetool_editor_content")) {
+                return savedRange.startContainer;
+            } else {
+                return savedRange.startContainer.parentNode
+            }
         }
     }
 

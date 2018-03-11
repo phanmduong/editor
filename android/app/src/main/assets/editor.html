@@ -45,7 +45,7 @@
             width: 99%;
             margin-top: 15px;
             margin-bottom: 15px;
-            background-color: rgba(25, 61, 98, 0.91);
+
         }
 
         [contenteditable=true]:empty:before {
@@ -59,9 +59,8 @@
 </head>
 <body id="body-content">
 <div id="keetool_editor_content" class="keetool_editor_content" contenteditable="true"
-     onblur="onDivBlur(); saveSelection()" onclick="return cancelEvent(event);"
-     onkeypress="saveSelection()" ; onmouseup="saveSelection()"
-     onmouseenter="saveSelection()"
+     onblur="onDivBlur();saveSelection();" onmousedown="return cancelEvent(event);" onclick="return cancelEvent(event);"
+     onmouseup="saveSelection();" onkeyup="saveSelection();"
 >
 </div>
 </body>
@@ -69,6 +68,8 @@
 
     var savedRange;
     var currentElement;
+    var isInFocus = false;
+
 
     function keyboardShow() {
         scrollView();
@@ -76,11 +77,8 @@
     }
 
     function keyboardHide() {
-        setTimeout(function () {
-            onDivBlur();
-            saveSelection();
-        }, 200);
-
+        saveSelection();
+        onDivBlur();
         document.getElementById('body-content').style.height = "96vh";
     }
 
@@ -93,36 +91,43 @@
         selection = window.getSelection(); //get the selection object (allows you to change selection)
         selection.removeAllRanges(); //remove any selections already made
         selection.addRange(range); //make the range you have just created the visible selection
-        // savedRange = range;
+        savedRange = range;
     }
 
     function insertImage(url) {
         var elem = document.getElementById('keetool_editor_content');
         document.getElementById('keetool_editor_content').focus();
 
-        var image = document.createElement('img');
-        image.src = url;
 
         if (savedRange == null) {
             setEndOfContenteditable(elem);
         }
-        savedRange.insertNode(image);
+
+        var elements = document.createElement('div');
+
+        var image = document.createElement("img");
+        image.src = url;
+        elements.appendChild(image);
+
+        var divbr2 = document.createElement('div');
+        divbr2.innerHTML = "<br>";
+        elements.appendChild(divbr2);
+        console.log(elements);
+
+        savedRange.insertNode(elements);
 
         currentElement = image;
-        isInFocus = true;
-        scrollView();
+
+        setTimeout(function () {
+            divbr2.scrollIntoView()
+        }, 200);
+
     }
 
     function setSourceElement(url) {
         if (currentElement) {
             currentElement.setAttribute("src", url);
         }
-    }
-
-    function htmlToElements(html) {
-        var template = document.createElement('div');
-        template.innerHTML = html;
-        return template;
     }
 
     function insertVideo(url) {
@@ -135,7 +140,7 @@
         var elements = document.createElement('div');
 
         var divbr1 = document.createElement('div');
-        divbr1.innerHTML = "<br>";
+        divbr1.innerHTML = "<br><div> </div>";
         elements.appendChild(divbr1);
         var video = document.createElement("video");
         video.src = url;
@@ -150,40 +155,20 @@
         elements.appendChild(video);
 
         var divbr2 = document.createElement('div');
-        divbr2.innerHTML = "<br>";
+        divbr2.innerHTML = "<br><div> </div>";
         elements.appendChild(divbr2);
 
         savedRange.insertNode(elements);
 
         currentElement = video;
-        isInFocus = true;
-        scrollView();
+
+        setTimeout(function () {
+            divbr2.scrollIntoView()
+        }, 200);
     }
 
     function blurEditor() {
         document.getElementById("keetool_editor_content").blur();
-    }
-
-    function iOS() {
-
-        var iDevices = [
-            'iPad Simulator',
-            'iPhone Simulator',
-            'iPod Simulator',
-            'iPad',
-            'iPhone',
-            'iPod'
-        ];
-
-        if (!!navigator.platform) {
-            while (iDevices.length) {
-                if (navigator.platform === iDevices.pop()) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
     }
 
     function getSelectedNode() {
@@ -202,13 +187,18 @@
 
     function scrollView() {
         setTimeout(function () {
-            if (savedRange) {
-                var div = document.createTextNode(" ");
-                savedRange.insertNode(div);
-                getSelectedNode().scrollIntoView();
-                div.parentNode.removeChild(div);
-            }
-        }, 100);
+            getSelectedNode().scrollIntoView();
+            setTimeout(function () {
+                if (savedRange) {
+                    var div = document.createTextNode(" ");
+                    savedRange.insertNode(div);
+                    setTimeout(function () {
+                        div.parentNode.removeChild(div);
+                    }, 100);
+                }
+            }, 200);
+        }, 200);
+
     }
 
     function saveEditor() {
@@ -227,8 +217,7 @@
 
     // Return cursor when insert image, video, etc.
 
-    var isInFocus = false;
-    window.saveSelection = function () {
+    function saveSelection() {
         if (window.getSelection)//non IE Browsers
         {
             savedRange = window.getSelection().getRangeAt(0);
@@ -239,8 +228,9 @@
         }
     }
 
-    window.restoreSelection = function () {
+    function restoreSelection() {
         isInFocus = true;
+        document.getElementById("keetool_editor_content").focus();
         if (savedRange != null) {
             if (window.getSelection)//non IE and there is already a selection
             {
@@ -259,14 +249,16 @@
             }
         }
     }
+
     //this part onwards is only needed if you want to restore selection onclick
-    window.onDivBlur = function () {
+    function onDivBlur() {
         isInFocus = false;
     }
 
-    window.cancelEvent = function (e) {
+    function cancelEvent(e) {
         if (isInFocus == false && savedRange != null) {
             if (e && e.preventDefault) {
+                //alert("FF");
                 e.stopPropagation(); // DOM style (return false doesn't always work in FF)
                 e.preventDefault();
             }
