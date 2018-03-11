@@ -127,7 +127,7 @@ class EditorContainer extends Component {
 
 // FUNCTION CHOICE IMAGE
     choiceImage() {
-        editorFunction.choiceImage(this.openLibrary, this.completeHandler, this.progressHandler, this.error)
+        editorFunction.choiceImage(this.openLibrary, this.completeHandler, this.progressHandler, this.error, this.closeLibrary)
     }
 
 // OPEN LIBRARY SELECT
@@ -197,12 +197,21 @@ class EditorContainer extends Component {
         webviewbridge.sendToBridge(JSON.stringify(data));
     };
 
+    closeLibrary = () => {
+        const {webviewbridge} = this.refs;
+        let data = {
+            message: 'close library'
+        };
+
+        webviewbridge.sendToBridge(JSON.stringify(data));
+    }
+
     /**
      * FUNCTION CHOICE VIDEO
      */
 
     choiceVideo() {
-        editorFunction.choiceVideo(this.openLibrary, this.completeHandler, this.progressHandler, this.error)
+        editorFunction.choiceVideo(this.openLibrary, this.completeHandler, this.progressHandler, this.error, this.closeLibrary)
     }
 
     /**
@@ -245,6 +254,12 @@ class EditorContainer extends Component {
             webviewbridge.sendToBridge(JSON.stringify(data));
         }
     }
+
+    closeLibrary = () => {
+        const {webviewbridge} = this.refs;
+        const data = {message: 'close library'};
+        webviewbridge.sendToBridge(JSON.stringify(data));
+    };
 
     /**
      * Save content post local

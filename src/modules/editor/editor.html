@@ -59,7 +59,7 @@
 </head>
 <body id="body-content">
 <div id="keetool_editor_content" class="keetool_editor_content" contenteditable="true"
-     onblur="onDivBlur();saveSelection();" onmousedown="return cancelEvent(event);" onclick="return cancelEvent(event);"
+     onblur="saveSelection();" onmousedown="return cancelEvent(event);" onclick="return cancelEvent(event);"
      onmouseup="saveSelection();" onkeyup="saveSelection();"
 >
 </div>
@@ -78,7 +78,6 @@
 
     function keyboardHide() {
         saveSelection();
-        onDivBlur();
         document.getElementById('body-content').style.height = "96vh";
     }
 

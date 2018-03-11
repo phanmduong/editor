@@ -35,9 +35,10 @@ export const injectScript = `
                             setSourceElement(data.link)
                         } 
                         if (data.message == "save selection"){
-                            if (isInFocus){
                                 saveSelection();
-                                }
+                        }
+                        if (data.message == "close library"){
+                            onDivBlur();
                         }
                       };
                     }

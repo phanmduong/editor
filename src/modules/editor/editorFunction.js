@@ -49,11 +49,11 @@ uploadVideo = (file, completeHandler, progressHandler, error) => {
  * FUNCTION CHOICE IMAGE FROM LIBRARY
  * @param func
  */
-export let choiceImage = (openLibrary, completeHandler, progressHandler, error) => {
+export let choiceImage = (openLibrary, completeHandler, progressHandler, error, closeLibrary) => {
     ImagePicker.showImagePicker(optionsImage, (response) => {
         console.log(response);
         if (response.didCancel) {
-            console.log('User cancelled image picker');
+            closeLibrary();
         }
         else if (response.error) {
             error()
@@ -79,11 +79,11 @@ const isIOS = Platform.OS === 'ios';
  * FUNCTION CHOICE VIDEO FROM LIBRARY
  * @param func
  */
-export let choiceVideo = (openLibrary, completeHandler, progressHandler, error) => {
+export let choiceVideo = (openLibrary, completeHandler, progressHandler, error, closeLibrary) => {
     ImagePicker.showImagePicker(optionsVideo, (response) => {
         console.log('Response = ', response);
         if (response.didCancel) {
-            console.log('User cancelled image picker');
+            closeLibrary();
         }
         else if (response.error) {
             error();
