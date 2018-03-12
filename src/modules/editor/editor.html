@@ -109,15 +109,16 @@
         divbr2 = document.createElement('div');
         divbr2.innerHTML = "<br><div> </div>";
         elements.appendChild(divbr2);
+        var selectedNode = getSelectedNode();
 
-        if (savedRange == null) {
+        if (savedRange == null || selectedNode == null) {
             setEndOfContenteditable(elem);
 
             savedRange.insertNode(elements);
         } else {
-            var text1 = getSelectedNode().textContent.substr(0, savedRange.startOffset);
-            var text2 = getSelectedNode().textContent.substr(savedRange.startOffset, getSelectedNode().textContent.length);
-            getSelectedNode().parentNode.removeChild(getSelectedNode());
+            var text1 = selectedNode.textContent.substr(0, savedRange.startOffset);
+            var text2 = selectedNode.textContent.substr(savedRange.startOffset, selectedNode.textContent.length);
+            selectedNode.parentNode.removeChild(selectedNode);
 
             var tagText1 = document.createElement('div');
             tagText1.innerHTML = text1;
@@ -187,16 +188,17 @@
         divbr2 = document.createElement('div');
         divbr2.innerHTML = "<br><div> </div>";
         elements.appendChild(divbr2);
+        var selectedNode = getSelectedNode();
 
-        if (savedRange == null) {
+        if (savedRange == null || selectedNode == null) {
             setEndOfContenteditable(elem);
             savedRange.insertNode(elements);
 
 
         } else {
-            var text1 = getSelectedNode().textContent.substr(0, savedRange.startOffset);
-            var text2 = getSelectedNode().textContent.substr(savedRange.startOffset, getSelectedNode().textContent.length);
-            getSelectedNode().parentNode.removeChild(getSelectedNode());
+            var text1 = selectedNode.textContent.substr(0, savedRange.startOffset);
+            var text2 = selectedNode.textContent.substr(savedRange.startOffset, selectedNode.textContent.length);
+            selectedNode.parentNode.removeChild(selectedNode);
 
             var tagText1 = document.createElement('div');
             tagText1.innerHTML = text1;
@@ -251,7 +253,10 @@
             if (savedRange.startContainer.parentNode == document.getElementById("keetool_editor_content")) {
                 return savedRange.startContainer;
             } else {
-                return savedRange.startContainer.parentNode
+                if (savedRange.startContainer == document.getElementById("keetool_editor_content")) {
+                    return null;
+                } else
+                    return savedRange.startContainer.parentNode
             }
         }
     }
