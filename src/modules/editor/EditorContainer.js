@@ -439,43 +439,48 @@ class EditorContainer extends Component {
 
                         }
 
-                        {/*FOOTER*/}
-                        <View style={[styles.wrapperRowCenter, styles.wrapperBottom]}>
-                            {/*CHOICE IMAGE BUTTON*/}
-                            <TouchableOpacity
-                                activeOpacity={this.state.isUploading ? 1 : 0.6}
-                                style={{paddingRight: 10}}
-                                onPress={() => {
-                                    if (!this.state.isUploading) {
-                                        this.choiceImage()
-                                    }
-                                }}
-                            >
-                                <IconDefault
-                                    name={"Entypo|folder-images"}
-                                    size={20}
-                                    color={color.disableColor}
-                                />
-                            </TouchableOpacity>
-                            {/*END CHOICE IMAGE BUTTON*/}
+                        <TouchableOpacity
+                            activeOpacity={1}
+                            onPress={() => this.closeKeyboard()}
+                        >
+                            {/*FOOTER*/}
+                            <View style={[styles.wrapperRowCenter, styles.wrapperBottom]}>
+                                {/*CHOICE IMAGE BUTTON*/}
+                                <TouchableOpacity
+                                    activeOpacity={this.state.isUploading ? 1 : 0.6}
+                                    style={{paddingRight: 10}}
+                                    onPress={() => {
+                                        if (!this.state.isUploading) {
+                                            this.choiceImage()
+                                        }
+                                    }}
+                                >
+                                    <IconDefault
+                                        name={"Entypo|folder-images"}
+                                        size={20}
+                                        color={color.disableColor}
+                                    />
+                                </TouchableOpacity>
+                                {/*END CHOICE IMAGE BUTTON*/}
 
-                            {/*CHOICE VIDEO BUTTON*/}
-                            <TouchableOpacity
-                                activeOpacity={this.state.isUploading ? 1 : 0.6}
-                                onPress={() => {
-                                    if (!this.state.isUploading) {
-                                        this.choiceVideo()
-                                    }
-                                }}
-                            >
-                                <IconDefault
-                                    name={"Entypo|folder-video"}
-                                    size={20}
-                                    color={color.disableColor}
-                                />
-                            </TouchableOpacity>
-                            {/*END CHOICE VIDEO BUTTON*/}
-                        </View>
+                                {/*CHOICE VIDEO BUTTON*/}
+                                <TouchableOpacity
+                                    activeOpacity={this.state.isUploading ? 1 : 0.6}
+                                    onPress={() => {
+                                        if (!this.state.isUploading) {
+                                            this.choiceVideo()
+                                        }
+                                    }}
+                                >
+                                    <IconDefault
+                                        name={"Entypo|folder-video"}
+                                        size={20}
+                                        color={color.disableColor}
+                                    />
+                                </TouchableOpacity>
+                                {/*END CHOICE VIDEO BUTTON*/}
+                            </View>
+                        </TouchableOpacity>
                     </View>
                     {/*END CONTENT*/}
                     {/*END BODY*/}
