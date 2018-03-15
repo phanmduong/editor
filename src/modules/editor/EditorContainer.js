@@ -24,10 +24,11 @@ import * as editorFunction from './editorFunction';
 // MODAL PROCESS UPLOAD SERVER
 import ModalProcess from "./ModalProcess";
 import WebViewBridge from 'react-native-webview-bridge-updated';
-import {injectScript, UPLOAD_ERROR} from "./constants";
+import {injectScript, UPLOAD_ERROR, UPLOAD_IMAGE_ERROR, UPLOAD_VIDEO_ERROR} from "./constants";
 import {formatData} from "./editorFunction";
 
 let isKeyboardShow = true;
+let typeUpload;
 
 class EditorContainer extends Component {
     constructor() {
@@ -136,8 +137,7 @@ class EditorContainer extends Component {
             link: url,
         };
 
-        console.log(data);
-        console.log(typeLibrary);
+        typeUpload = typeLibrary;
 
         const {webviewbridge} = this.refs;
 
@@ -189,7 +189,7 @@ class EditorContainer extends Component {
         this.setState({isUploading: false});
         const {webviewbridge} = this.refs;
         let data = {
-            link: UPLOAD_ERROR
+            link: typeUpload == 'image' ? UPLOAD_IMAGE_ERROR : UPLOAD_VIDEO_ERROR
         };
 
         console.log(data.link);
@@ -247,7 +247,6 @@ class EditorContainer extends Component {
     };
 
     saveSelecton = () => {
-        console.log("ok");
         if (!isKeyboardShow) {
             const {webviewbridge} = this.refs;
             const data = {message: 'save selection'};
@@ -498,112 +497,118 @@ class EditorContainer extends Component {
 export default (EditorContainer)
 
 // WIDTH, HEIGHT DEVICE'S SCREEN
-const deviceWidth = Dimensions.get('window').width;
-const deviceHeight = Dimensions.get('window').height;
+const
+    deviceWidth = Dimensions.get('window').width;
+const
+    deviceHeight = Dimensions.get('window').height;
 
 // IF DEVICE IS IOS
-const isIOS = Platform.OS === 'ios';
+const
+    isIOS = Platform.OS === 'ios';
 
 // COLORS USED
-const color = {
-    background: '#FFF',
-    disableColor: '#8e8e8e',
-    textColor: '#000',
-    shadowColor: 'rgba(0,0,0,0.5)',
-    mainColor: '#dd066b'
-}
+const
+    color = {
+        background: '#FFF',
+        disableColor: '#8e8e8e',
+        textColor: '#000',
+        shadowColor: 'rgba(0,0,0,0.5)',
+        mainColor: '#dd066b'
+    }
 
 // STYLE USED
-const style = {
-    wrapperContainer: {
-        flex: 1,
-        backgroundColor: color.background,
-    },
-    wrapperHeader: {
-        height: isIOS ? 70 : 50,
-        paddingTop: isIOS ? 20 : 0,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: color.background,
-    },
-    wrapperBody: {
-        marginHorizontal: 10,
-        marginTop: 10,
-        backgroundColor: color.background,
+const
+    style = {
+        wrapperContainer: {
+            flex: 1,
+            backgroundColor: color.background,
+        },
+        wrapperHeader: {
+            height: isIOS ? 70 : 50,
+            paddingTop: isIOS ? 20 : 0,
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: color.background,
+        },
+        wrapperBody: {
+            marginHorizontal: 10,
+            marginTop: 10,
+            backgroundColor: color.background,
 
-    },
-    wrapperBottom: {
-        width: deviceWidth,
-        borderTopWidth: 1,
-        borderColor: "#ccc",
-        flexDirection: 'row',
-        padding: 10,
-        bottom: 0,
-        backgroundColor: '#FFFFFF'
-    },
-    wrapperRowSpaceBetween: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-    },
-    wrapperRowCenter: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-
-    paddingLeftRight: {
-        paddingLeft: 10,
-        paddingRight: 10,
-    },
-    marginLeftRight: {
-        marginLeft: 10,
-        marginRight: 10,
-    },
-    marginTopBottom: {
-        marginTop: 10,
-        marginBottom: 10,
-    },
-    imageFullWidth: {
-        height: deviceHeight / 3,
-        backgroundColor: color.background
-    },
-    textButton: {
-        color: color.textColor,
-        fontSize: 14,
-    },
-    textButtonDisable: {
-        color: color.disableColor,
-        fontSize: 14,
-    },
-    buttonPublic: {
-        borderRadius: 50,
-        borderWidth: 1,
-        borderColor: color.disableColor,
-        paddingLeft: 7,
-        paddingRight: 10,
-        paddingVertical: 3
-    },
-    containerEditor: {
-        flex: 1,
-        backgroundColor: color.background
-    },
-    textTitle: {
-        marginHorizontal: 7,
-        paddingVertical: 5,
-        borderBottomWidth: 1,
-        borderColor: '#cccccc'
-    },
-    shadow: isIOS
-        ?
-        {
-            shadowColor: color.shadowColor,
-            shadowOffset: {width: 0, height: 1},
-            shadowOpacity: 0.3,
-        }
-        :
-        {
-            elevation: 1,
+        },
+        wrapperBottom: {
+            width: deviceWidth,
+            borderTopWidth: 1,
+            borderColor: "#ccc",
+            flexDirection: 'row',
+            padding: 10,
+            bottom: 0,
+            backgroundColor: '#FFFFFF'
+        },
+        wrapperRowSpaceBetween: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+        },
+        wrapperRowCenter: {
+            flexDirection: 'row',
+            alignItems: 'center',
         },
 
-}
-const styles = StyleSheet.create(style)
+        paddingLeftRight: {
+            paddingLeft: 10,
+            paddingRight: 10,
+        },
+        marginLeftRight: {
+            marginLeft: 10,
+            marginRight: 10,
+        },
+        marginTopBottom: {
+            marginTop: 10,
+            marginBottom: 10,
+        },
+        imageFullWidth: {
+            height: deviceHeight / 3,
+            backgroundColor: color.background
+        },
+        textButton: {
+            color: color.textColor,
+            fontSize: 14,
+        },
+        textButtonDisable: {
+            color: color.disableColor,
+            fontSize: 14,
+        },
+        buttonPublic: {
+            borderRadius: 50,
+            borderWidth: 1,
+            borderColor: color.disableColor,
+            paddingLeft: 7,
+            paddingRight: 10,
+            paddingVertical: 3
+        },
+        containerEditor: {
+            flex: 1,
+            backgroundColor: color.background
+        },
+        textTitle: {
+            marginHorizontal: 7,
+            paddingVertical: 5,
+            borderBottomWidth: 1,
+            borderColor: '#cccccc'
+        },
+        shadow: isIOS
+            ?
+            {
+                shadowColor: color.shadowColor,
+                shadowOffset: {width: 0, height: 1},
+                shadowOpacity: 0.3,
+            }
+            :
+            {
+                elevation: 1,
+            },
+
+    }
+const
+    styles = StyleSheet.create(style)

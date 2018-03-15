@@ -45,4 +45,5 @@ export const injectScript = `
                   }())
 `;
 
-export const UPLOAD_ERROR = "https://cdn.shopify.com/s/files/1/1380/9193/t/3/assets/no-image.svg?2375582141201571545";
+export const UPLOAD_IMAGE_ERROR = "https://cdn.shopify.com/s/files/1/1380/9193/t/3/assets/no-image.svg?2375582141201571545";
+export const UPLOAD_VIDEO_ERROR = "https://cdn.shopify.com/s/files/1/1380/9193/t/3/assets/no-image.svg?2375582141201571545";
